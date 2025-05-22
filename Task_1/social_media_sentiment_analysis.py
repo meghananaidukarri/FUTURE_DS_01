@@ -1,37 +1,41 @@
 import pandas as pd
-from bs4 import BeautifulSoup
-from textblob import TextBlob
-import re
+import random
+from datetime import datetime, timedelta
 
-# Load dataset
-file_path = "sentimentdataset.csv"  # or your absolute path
-df = pd.read_csv(file_path)
+# Sample data pools
+usernames = ["alice", "bob", "charlie", "david", "emma", "frank"]
+platforms = ["Twitter", "Instagram", "LinkedIn"]
+hashtags_pool = ["#AI", "#Tech", "#Startup", "#Coding", "#Python", "#ML"]
+positive_phrases = ["I love using AI tools", "Python makes life easier", "Excited about the future of tech"]
+negative_phrases = ["I hate the new update", "Tech is ruining everything", "Not happy with the service"]
+neutral_phrases = ["Just read an article", "Using the platform", "Attended a webinar today"]
 
-# Step 1: Clean the text
-def clean_text(text):
-    text = str(text)
-    text = BeautifulSoup(text, "html.parser").get_text()  # remove HTML tags
-    text = re.sub(r"http\S+|www.\S+", "", text)           # remove URLs
-    text = re.sub(r"@\w+", "", text)                      # remove @mentions
-    text = re.sub(r"#\w+", "", text)                      # remove hashtags
-    text = re.sub(r"[^A-Za-z0-9\s]", "", text)            # remove special characters
-    return text.lower().strip()
-
-df["Cleaned_Text"] = df["Text"].apply(clean_text)
-
-# Step 2: Sentiment analysis using TextBlob
-def get_sentiment(text):
-    blob = TextBlob(text)
-    polarity = blob.sentiment.polarity
-    if polarity > 0.1:
-        return "Positive"
-    elif polarity < -0.1:
-        return "Negative"
+# Generate random posts
+def generate_post():
+    sentiment = random.choice(["Positive", "Negative", "Neutral"])
+    if sentiment == "Positive":
+        text = random.choice(positive_phrases)
+    elif sentiment == "Negative":
+        text = random.choice(negative_phrases)
     else:
-        return "Neutral"
+        text = random.choice(neutral_phrases)
 
-df["Calculated_Sentiment"] = df["Cleaned_Text"].apply(get_sentiment)
+    post = {
+        "timestamp": (datetime.now() - timedelta(days=random.randint(0, 30))).strftime("%Y-%m-%d %H:%M:%S"),
+        "username": random.choice(usernames),
+        "content": text,
+        "platform": random.choice(platforms),
+        "hashtags": random.choice(hashtags_pool),
+        "likes": random.randint(0, 1000),
+        "shares": random.randint(0, 500),
+        "sentiment": sentiment
+    }
+    return post
 
-# Step 3: Save the new data
-df.to_csv("cleaned_sentiment_output.csv", index=False)
-print("✅ Sentiment analysis complete. Output saved as 'cleaned_sentiment_output.csv'")
+# Create a DataFrame of fake data
+data = [generate_post() for _ in range(100)]
+df = pd.DataFrame(data)
+
+# Save to CSV
+df.to_csv("generated_sentimentdataset.csv", index=False)
+print("✅ Sample dataset created: generated_sentimentdataset.csv")
