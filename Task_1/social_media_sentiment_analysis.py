@@ -3,7 +3,7 @@ from textblob import TextBlob
 import csv
 import re
 
-# Step 1: Load your CSV file (make sure it's in the same folder as this script)
+# Step 1: Load your CSV file 
 file_path = "sentimentdataset.csv"
 
 # Step 2: Clean the text
@@ -40,3 +40,13 @@ with open(file_path, encoding='utf-8') as f:
 # Step 5: Show some results
 for i, (text, sentiment) in enumerate(results[:10], start=1):
     print(f"{i}. {text}\n   Sentiment: {sentiment}\n")
+    
+# Step 6: Save all results to a new CSV file
+output_file = "cleaned_sentiment_output.csv"
+
+with open(output_file, mode="w", newline="", encoding="utf-8") as f_out:
+    writer = csv.writer(f_out)
+    writer.writerow(["Cleaned_Text", "Sentiment"])
+    writer.writerows(results)
+
+print(f"All results saved to {output_file}")
