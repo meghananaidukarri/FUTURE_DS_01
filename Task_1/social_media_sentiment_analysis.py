@@ -3,43 +3,48 @@ from textblob import TextBlob
 import csv
 import re
 
-# Step 1: Load your CSV file
+# Step 1: Load your CSV file (make sure it's in the same folder)
 file_path = "sentimentdataset.csv"
 
-# Step 2: Clean the text (LESS aggressive)
+# Step 2: Clean the text
 def clean_text(text):
     text = str(text)
-    text = BeautifulSoup(text, "html.parser").get_text()  # Remove HTML
+    text = BeautifulSoup(text, "html.parser").get_text()  # Remove HTML tags
     text = re.sub(r"http\S+|www.\S+", "", text)           # Remove URLs
-    text = re.sub(r"@\w+", "", text)                      # Remove mentions
-    text = re.sub(r"#", "", text)                         # Remove only '#' symbol, not words
-    return text.strip()
+    text = re.sub(r"@\w+", "", text)                      # Remove @mentions
+    text = re.sub(r"#\w+", "", text)                      # Remove hashtags
+    text = re.sub(r"[^A-Za-z0-9\s]", "", text)            # Remove punctuation
+    return text.lower().strip()
 
-# Step 3: Analyze sentiment
+# Step 3: Analyze sentiment using TextBlob
 def get_sentiment(text):
-    blob = TextBlob(text)
-    polarity = blob.sentiment.polarity
-    if polarity > 0.1:
+    polarity = TextBlob(text).sentiment.polarity
+    print(f"Text: {text} → Polarity: {polarity}")  # Debugging output
+    if polarity > 0:
         return "Positive"
-    elif polarity < -0.1:
+    elif polarity < 0:
         return "Negative"
     else:
         return "Neutral"
 
-# Step 4: Process file
+# Step 4: Read the file and analyze each row
 results = []
+
 with open(file_path, encoding='utf-8') as f:
     reader = csv.DictReader(f)
     for row in reader:
         raw = row.get("content", "")
+        # Try analyzing both raw and cleaned to compare
         cleaned = clean_text(raw)
         sentiment = get_sentiment(cleaned)
         results.append((cleaned, sentiment))
 
-# Step 5: Export to new CSV
-import pandas as pd
-df = pd.DataFrame(results, columns=["Cleaned_Text", "Sentiment"])
-df.to_csv("cleaned_sentiment_output.csv", index=False)
+# Step 5: Save results to new CSV
+with open("cleaned_sentiment_output.csv", "w", encoding="utf-8", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["Cleaned_Text", "Sentiment"])
+    writer.writerows(results)
 
-# Step 6: Preview sample
-print(df.head(10))
+# Step 6: Show first 10 for verification
+for i, (text, sentiment) in enumerate(results[:10], start=1):
+    print(f"{i}. {text}\n   Sentiment: {sentiment}\n")
