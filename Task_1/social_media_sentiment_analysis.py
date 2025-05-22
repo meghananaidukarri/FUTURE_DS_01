@@ -1,50 +1,37 @@
+import pandas as pd
 from bs4 import BeautifulSoup
 from textblob import TextBlob
-import csv
 import re
 
-# Step 1: Load your CSV file (make sure it's in the same folder)
-file_path = "sentimentdataset.csv"
+# Load dataset
+file_path = "sentimentdataset.csv"  # or your absolute path
+df = pd.read_csv(file_path)
 
-# Step 2: Clean the text
+# Step 1: Clean the text
 def clean_text(text):
     text = str(text)
-    text = BeautifulSoup(text, "html.parser").get_text()  # Remove HTML tags
-    text = re.sub(r"http\S+|www.\S+", "", text)           # Remove URLs
-    text = re.sub(r"@\w+", "", text)                      # Remove @mentions
-    text = re.sub(r"#\w+", "", text)                      # Remove hashtags
-    text = re.sub(r"[^A-Za-z0-9\s]", "", text)            # Remove punctuation
+    text = BeautifulSoup(text, "html.parser").get_text()  # remove HTML tags
+    text = re.sub(r"http\S+|www.\S+", "", text)           # remove URLs
+    text = re.sub(r"@\w+", "", text)                      # remove @mentions
+    text = re.sub(r"#\w+", "", text)                      # remove hashtags
+    text = re.sub(r"[^A-Za-z0-9\s]", "", text)            # remove special characters
     return text.lower().strip()
 
-# Step 3: Analyze sentiment using TextBlob
+df["Cleaned_Text"] = df["Text"].apply(clean_text)
+
+# Step 2: Sentiment analysis using TextBlob
 def get_sentiment(text):
-    polarity = TextBlob(text).sentiment.polarity
-    print(f"Text: {text} → Polarity: {polarity}")  # Debugging output
-    if polarity > 0:
+    blob = TextBlob(text)
+    polarity = blob.sentiment.polarity
+    if polarity > 0.1:
         return "Positive"
-    elif polarity < 0:
+    elif polarity < -0.1:
         return "Negative"
     else:
         return "Neutral"
 
-# Step 4: Read the file and analyze each row
-results = []
+df["Calculated_Sentiment"] = df["Cleaned_Text"].apply(get_sentiment)
 
-with open(file_path, encoding='utf-8') as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        raw = row.get("content", "")
-        # Try analyzing both raw and cleaned to compare
-        cleaned = clean_text(raw)
-        sentiment = get_sentiment(cleaned)
-        results.append((cleaned, sentiment))
-
-# Step 5: Save results to new CSV
-with open("cleaned_sentiment_output.csv", "w", encoding="utf-8", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(["Cleaned_Text", "Sentiment"])
-    writer.writerows(results)
-
-# Step 6: Show first 10 for verification
-for i, (text, sentiment) in enumerate(results[:10], start=1):
-    print(f"{i}. {text}\n   Sentiment: {sentiment}\n")
+# Step 3: Save the new data
+df.to_csv("cleaned_sentiment_output.csv", index=False)
+print("✅ Sentiment analysis complete. Output saved as 'cleaned_sentiment_output.csv'")
